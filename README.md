@@ -88,7 +88,7 @@ pipeline {
 }
 ```
 
-`reportArgumentList` / `argumentList` entries are positional: non-scalar values are prefixed with `ns_`, scalar values are passed as-is. Use **Pipeline Syntax** generator in Jenkins to build these snippets against your own project's models/functions, since the available names are specific to each Reqtify project.
+`reportArgumentList` / `argumentList` entries are grouped by type, not positional: entries prefixed with `ns_` are collected into a non-scalar argument group and all other entries into a scalar argument group, and each group is sent to Reqtify separately. Relative order is preserved within each group, but not between scalar and non-scalar entries in the original list. Use **Pipeline Syntax** generator in Jenkins to build these snippets against your own project's models/functions, since the available names are specific to each Reqtify project.
 
 Note: the Pipeline `reqtifyReport` step does not currently expose the **Project Filter** field available in the freestyle build step.
 
@@ -96,4 +96,4 @@ Note: the Pipeline `reqtifyReport` step does not currently expose the **Project 
 
 * The plugin only works when a Reqtify project is present in the Jenkins workspace.
 * **Reqtify version required: 2021x**
-* Windows agent with a licensed Reqtify installation is required, see [Prerequisites](#prerequisites).
+* A Windows Jenkins controller with a licensed Reqtify installation is required, see [Prerequisites](#prerequisites).
