@@ -1,10 +1,20 @@
-# Reqtify-plugin-for-Jenkins
+# Reqtify Plugin for Jenkins
 
-This plugin allows to  
-1. Configure Reqtify report generation build step and then generate report during build.
-2. Configure Reqtify call function build step and then call the function during build. 
+[Reqtify](https://www.3ds.com/) is a requirements traceability and reporting tool from Dassault Systèmes. This plugin integrates Reqtify with Jenkins so that a build can:
 
-### Configure Reqtify report generation build step
+1. Generate a Reqtify report (**Reqtify: Generate Report** build step).
+2. Call an arbitrary Reqtify function exposed by the opened project (**Reqtify: Call Function** build step).
+
+Both build steps are also available as Pipeline steps for use in a `Jenkinsfile`.
+
+## Prerequisites
+
+* **Windows only.** The plugin drives a local Reqtify installation through its COM/OLE interface (it looks up `HKCR\Reqtify.Application\CLSID` in the Windows registry to find `reqtify.exe`), so the Jenkins **agent that runs the build** must be running Windows with Reqtify installed and licensed on it.
+* **Reqtify version 2021x** or later is required.
+* The job's workspace must already contain a Reqtify project (a `.rqtf` file) before either build step runs — the plugin opens the first Reqtify project it finds in the workspace, it does not create one.
+* Only one Reqtify project can be open per build; the plugin manages a single background Reqtify process per language for the controller.
+
+## Configure Reqtify report generation build step
 
 In the project configuration page, add a **Reqtify: Generate Report** build step.
 
@@ -16,13 +26,13 @@ This allows to fill following fields:
 
 * **Report Name** - This is the report file name without any path or suffix. This report file will be created at the root of the Jenkins workspace.
 
-* **Report Model** - This is the report model. The list contains both library and project report models.
-
-* **docs** - A scalar paramter to for report generation
+* **Report Model** - This is the report model. The list contains both library and project report models. Choosing a model populates the report's own parameters below the field (scalar parameters render as text boxes, non-scalar parameters render as multi-select lists) — the same list is fetched live from Reqtify, so it can change from project to project.
 
 * **Report Template** - This is the report template. The list contains both library and project report templates like HTML, DOCX, Excel, PDF etc.
 
-### Configure calling function build step
+* **Project Filter** - Optional. Restricts report generation to a named filter defined in the Reqtify project (for example to only include passed/failed tests). Leave it on "Select Project Filter" to generate the report without a filter.
+
+## Configure calling function build step
 
 In the project configuration page, add a **Reqtify: Call Function** build step.
 
@@ -32,12 +42,58 @@ This allows to fill following fields:
 
 ![reportModelsAndReportTemplates](https://github.com/jenkinsci/reqtify-plugin/blob/master/images/call_function_build_step.png)
 
-* **Function Name** - This is the function name to call during the build. To add parameters for the function, you have to select a function from the list.
+* **Function Name** - This is the function name to call during the build, selected from the list of functions exposed by the Reqtify project.
 
-* **aReq** - A scalar parameter for the function
+* **Function parameters** - Selecting a function populates its parameters below the field, fetched live from Reqtify. Scalar parameters (e.g. **aReq**) render as a text box; non-scalar parameters (e.g. **anIndex**) render as a multi-select list. The exact parameter names and count depend on the selected function.
 
-* **anIndex** - Non-Scalar parameter for the function
+## Pipeline (Jenkinsfile) usage
 
-### Note:
-The plugin will work only when Reqtify project is present in the Jenkins workspace. <br>
-**Reqtify version required: 2021x**
+Both build steps are also available as Pipeline steps.
+
+Generate a report with `reqtifyReport`:
+
+```groovy
+pipeline {
+    agent { label 'windows' }
+    stages {
+        stage('Reqtify report') {
+            steps {
+                reqtifyReport(
+                    nameReport: 'Report',
+                    modelReport: 'MyReportModel',
+                    templateReport: 'HTML',
+                    reportArgumentList: ['ns_1', 'value']
+                )
+            }
+        }
+    }
+}
+```
+
+Call a Reqtify function with `reqtifyFunction`:
+
+```groovy
+pipeline {
+    agent { label 'windows' }
+    stages {
+        stage('Reqtify function') {
+            steps {
+                reqtifyFunction(
+                    functionName: 'myFunction',
+                    argumentList: ['ns_1', 'value']
+                )
+            }
+        }
+    }
+}
+```
+
+`reportArgumentList` / `argumentList` entries are positional: non-scalar values are prefixed with `ns_`, scalar values are passed as-is. Use **Pipeline Syntax** generator in Jenkins to build these snippets against your own project's models/functions, since the available names are specific to each Reqtify project.
+
+Note: the Pipeline `reqtifyReport` step does not currently expose the **Project Filter** field available in the freestyle build step.
+
+## Notes
+
+* The plugin only works when a Reqtify project is present in the Jenkins workspace.
+* **Reqtify version required: 2021x**
+* Windows agent with a licensed Reqtify installation is required, see [Prerequisites](#prerequisites).
