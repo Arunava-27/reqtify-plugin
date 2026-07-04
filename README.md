@@ -9,10 +9,10 @@ Both build steps are also available as Pipeline steps for use in a `Jenkinsfile`
 
 ## Prerequisites
 
-* **Windows only.** The plugin drives a local Reqtify installation through its COM/OLE interface (it looks up `HKCR\Reqtify.Application\CLSID` in the Windows registry to find `reqtify.exe`), so the Jenkins **agent that runs the build** must be running Windows with Reqtify installed and licensed on it.
+* **Windows only.** The plugin locates `reqtify.exe` via the Reqtify COM registration (`HKCR\Reqtify.Application\CLSID`) and starts Reqtify in HTTP server mode (`-http`), so the Jenkins **controller** must be running Windows with Reqtify installed and licensed.
 * **Reqtify version 2021x** or later is required.
-* The job's workspace must already contain a Reqtify project (a `.rqtf` file) before either build step runs — the plugin opens the first Reqtify project it finds in the workspace, it does not create one.
-* Only one Reqtify project can be open per build; the plugin manages a single background Reqtify process per language for the controller.
+* The Jenkins controller workspace for the job must already contain a Reqtify project (a `.rqtf` file) before either build step runs — the plugin asks Reqtify to open a project from that directory; it does not create one.
+* The plugin manages a single background Reqtify process per language on the controller, so only one Reqtify project can be open at a time per language across builds.
 
 ## Configure Reqtify report generation build step
 
